@@ -1,0 +1,8 @@
+{
+  "path": "/data/docs",
+  "include_patterns": ["**/*.pdf", "**/*.docx", "**/*.txt", "**/*.md", "**/*.png", "**/*.jpg"],
+  "exclude_patterns": ["**/node_modules/**", "**/.git/**", "**/__pycache__/**"],
+  "max_depth": -1,
+  "batch_size": 50,
+  "rate_limit_delay_secs": 0.2
+}

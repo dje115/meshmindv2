@@ -1,0 +1,8 @@
+[project]
+name = "meshmind-worker-ocr"
+version = "0.1.0"
+description = "OCR worker"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+]

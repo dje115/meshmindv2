@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "meshmind-worker-connectors"
+version = "0.1.0"
+description = "Connectors package - filesystem first"
+requires-python = ">=3.11"
+dependencies = ["meshmind-worker-runtime"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+meshmind-fs-connector = "meshmind_connectors.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/meshmind_connectors"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

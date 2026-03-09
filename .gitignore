@@ -1,0 +1,47 @@
+# Rust
+/target/
+Cargo.lock
+
+# Node
+node_modules/
+*.log
+npm-debug.log*
+.npm
+dist/
+build/
+apps/web/dist/
+
+# Python
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+.env
+*.egg-info/
+.eggs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Data
+data/
+*.db
+*.sqlite
+
+# Build
+*.local

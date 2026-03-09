@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: meshmind
+          POSTGRES_PASSWORD: meshmind
+          POSTGRES_DB: meshmind
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready -U meshmind
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://meshmind:meshmind@localhost:5432/meshmind
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+        with:
+          components: clippy
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+
+      - name: Clippy
+        run: cargo clippy -p meshmind-control-api -- -D warnings
+
+      - name: Test (unit)
+        run: cargo test -p meshmind-control-api --lib
+
+      - name: Test (integration, with Postgres)
+        run: cargo test -p meshmind-control-api -- --ignored
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install
+        run: cd apps/web && npm ci
+
+      - name: Lint
+        run: cd apps/web && npm run lint
+
+      - name: Build
+        run: cd apps/web && npm run build

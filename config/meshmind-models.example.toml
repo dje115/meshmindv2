@@ -1,0 +1,26 @@
+# MeshMind v2 - Model configuration example
+# Copy to meshmind-models.toml and edit as needed.
+# Profile selected via MESHMIND_MODEL_PROFILE (default: cpu-friendly)
+
+[default]
+profile = "cpu-friendly"
+
+# CPU-friendly: suitable for development, small business, modest hardware
+[profiles.cpu-friendly]
+chat = "llama3.2:3b"
+enrichment = "llama3.2:3b"
+embeddings = "nomic-embed-text"
+# image_caption = "llava:7b"   # optional; omit if not needed
+
+# Better-quality: suitable for stronger GPU (8+ GB VRAM)
+[profiles.better-quality]
+chat = "llama3.2"
+enrichment = "mistral:7b"
+embeddings = "nomic-embed-text"
+# image_caption = "llava:13b"
+
+# Minimal: smallest footprint for CPU-only testing
+[profiles.minimal]
+chat = "llama3.2:1b"
+enrichment = "llama3.2:1b"
+embeddings = "nomic-embed-text"

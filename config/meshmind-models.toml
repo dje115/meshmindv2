@@ -1,0 +1,20 @@
+# MeshMind v2 - Model configuration
+# See docs/MODEL_CONFIGURATION.md
+
+[default]
+profile = "cpu-friendly"
+
+[profiles.cpu-friendly]
+chat = "llama3.2:3b"
+enrichment = "llama3.2:3b"
+embeddings = "nomic-embed-text"
+
+[profiles.better-quality]
+chat = "llama3.2"
+enrichment = "mistral:7b"
+embeddings = "nomic-embed-text"
+
+[profiles.minimal]
+chat = "llama3.2:1b"
+enrichment = "llama3.2:1b"
+embeddings = "nomic-embed-text"

@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+members = ["apps/control-api"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+rust-version = "1.75"
+authors = ["MeshMind Team"]
+repository = "https://github.com/dje115/meshmindv2"
+description = "On-prem AI knowledge platform - server-first, browser-first"
