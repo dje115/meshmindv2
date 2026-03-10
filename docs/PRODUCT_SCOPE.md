@@ -1,6 +1,6 @@
 # MeshMind v2 — Product Scope
 
-> **Note:** MeshMind v1 (see [github.com/dje115/meshmind](https://github.com/dje115/meshmind) and `C:\Users\david\Documents\meshmind`) is **reference-only**. v2 is a clean-sheet redesign with different architecture and scope.
+> **Note:** MeshMind v1 (see [github.com/dje115/meshmind](https://github.com/dje115/meshmind) and `C:\Users\david\Documents\meshmind`) is **reference-only**. v2 is a clean-sheet redesign with different architecture and scope. See [PRODUCT_DIRECTION.md](PRODUCT_DIRECTION.md) for UI-first settings, internet research, chat evolution, and AI dashboards.
 
 ## Purpose
 
@@ -35,7 +35,7 @@ MeshMind v2 is an **on-prem, server-first, browser-first AI knowledge platform**
 | Peer-to-peer mesh | v2 is server-centric |
 | Federated learning | Not in initial scope |
 | On-device training / custom model training | Future phase |
-| Web research / external crawl | Not in v2 core |
+| Uncontrolled web crawl / always-on external access | Controlled internet research is planned (see PRODUCT_DIRECTION.md) |
 | Mobile apps | Browser-first |
 | Real-time collaboration | Not required for v2 |
 | Offline-first / local-first sync | Server is source of truth |

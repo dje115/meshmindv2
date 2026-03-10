@@ -41,3 +41,11 @@
 | [WORKER_PROTOCOL.md](WORKER_PROTOCOL.md) | Worker protocol (register, heartbeat, claim, complete, fail) |
 | [FILESYSTEM_CONNECTOR.md](FILESYSTEM_CONNECTOR.md) | Filesystem connector: config, scan, provenance, reindex |
 | [DOCUMENT_PROCESSING.md](DOCUMENT_PROCESSING.md) | Document processing worker: supported formats, Tika, tests |
+| [OCR_AND_IMAGE_WORKERS.md](OCR_AND_IMAGE_WORKERS.md) | OCR and image workers: Tesseract, classification, provenance |
+| [POST_EXTRACTION_PIPELINE.md](POST_EXTRACTION_PIPELINE.md) | Chunking, enrichment, embeddings flow |
+| [CHUNKING_CONFIGURATION.md](CHUNKING_CONFIGURATION.md) | Chunk size, overlap, document types |
+| [ENRICHMENT_SCHEMA.md](ENRICHMENT_SCHEMA.md) | Enrichment output schema |
+| [EMBEDDING_VERSIONING.md](EMBEDDING_VERSIONING.md) | Model versioning, re-embed |
+| [LOCAL_MODELS.md](LOCAL_MODELS.md) | Choosing local embedding models |
+| [PROVENANCE_CHUNKING.md](PROVENANCE_CHUNKING.md) | Provenance through chunking/enrichment |
+| [CONFIGURATION_AUDIT.md](CONFIGURATION_AUDIT.md) | Configuration audit: settings, env vars, migration plan |

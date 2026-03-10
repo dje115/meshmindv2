@@ -58,7 +58,7 @@ Set MESHMIND_MODEL_STRICT=false to start with warnings only.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `MESHMIND_MODEL_STRICT` | `true` | If true, fail startup when required models missing |
-| `MESHMIND_OLLAMA_URL` | `http://localhost:11434` | Ollama API URL |
+| `OLLAMA_URL` | `http://localhost:11434` | Ollama API URL |
 | `MESHMIND_MODEL_PROFILE` | `cpu-friendly` | Profile for model selection |
 
 ## Implementation Notes

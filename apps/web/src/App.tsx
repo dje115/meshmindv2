@@ -1,65 +1,49 @@
-import { BrowserRouter, Routes, Route, NavLink, Outlet } from 'react-router-dom'
-
-function Layout() {
-  const navItems = [
-    { to: '/', label: 'Dashboard' },
-    { to: '/ask', label: 'Ask' },
-    { to: '/search', label: 'Search' },
-    { to: '/sources', label: 'Sources' },
-    { to: '/jobs', label: 'Jobs' },
-    { to: '/admin', label: 'Admin' },
-  ]
-
-  return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
-      <nav className="border-b border-slate-700 px-4 py-3">
-        <div className="flex items-center gap-6">
-          <span className="font-semibold text-lg">MeshMind v2</span>
-          <ul className="flex gap-4">
-            {navItems.map(({ to, label }) => (
-              <li key={to}>
-                <NavLink
-                  to={to}
-                  end={to === '/'}
-                  className={({ isActive }) =>
-                    `px-3 py-1 rounded ${isActive ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200'}`
-                  }
-                >
-                  {label}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </nav>
-      <main className="flex-1 p-6">
-        <Outlet />
-      </main>
-    </div>
-  )
-}
-
-function Placeholder({ title }: { title: string }) {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">{title}</h1>
-      <p className="text-slate-400">Placeholder — coming soon</p>
-    </div>
-  )
-}
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Layout } from './components/Layout'
+import { ProtectedRoute } from './components/ProtectedRoute'
+import { Login } from './pages/Login'
+import { Overview } from './pages/Overview'
+import { SearchPage } from './pages/Search'
+import { AskPage } from './pages/Ask'
+import { KnowledgeExplorerPage } from './pages/KnowledgeExplorer'
+import { SourcesPage } from './pages/Sources'
+import { SourceDetailPage } from './pages/SourceDetail'
+import { AgentsPage } from './pages/Agents'
+import { AgentDetailPage } from './pages/AgentDetail'
+import { JobsPage } from './pages/Jobs'
+import { JobDetailPage } from './pages/JobDetail'
+import { WorkspacesPage } from './pages/Workspaces'
+import { ModelsPage } from './pages/Models'
+import { SettingsPage } from './pages/Settings'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Placeholder title="Dashboard" />} />
-          <Route path="ask" element={<Placeholder title="Ask" />} />
-          <Route path="search" element={<Placeholder title="Search" />} />
-          <Route path="sources" element={<Placeholder title="Sources" />} />
-          <Route path="jobs" element={<Placeholder title="Jobs" />} />
-          <Route path="admin" element={<Placeholder title="Admin" />} />
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Overview />} />
+          <Route path="search" element={<SearchPage />} />
+          <Route path="ask" element={<AskPage />} />
+          <Route path="explorer" element={<KnowledgeExplorerPage />} />
+          <Route path="sources" element={<SourcesPage />} />
+          <Route path="sources/:id" element={<SourceDetailPage />} />
+          <Route path="agents" element={<AgentsPage />} />
+          <Route path="agents/:id" element={<AgentDetailPage />} />
+          <Route path="jobs" element={<JobsPage />} />
+          <Route path="jobs/:id" element={<JobDetailPage />} />
+          <Route path="workspaces" element={<WorkspacesPage />} />
+          <Route path="models" element={<ModelsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   )

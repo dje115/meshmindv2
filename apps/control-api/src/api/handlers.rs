@@ -19,6 +19,7 @@ use uuid::Uuid;
 pub struct AppState {
     pub pool: sqlx::PgPool,
     pub auth_config: AuthConfig,
+    pub query_api_url: String,
 }
 
 #[derive(Debug, Serialize, ToSchema)]

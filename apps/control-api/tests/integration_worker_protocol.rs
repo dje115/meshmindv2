@@ -26,6 +26,7 @@ async fn setup_app() -> (axum::Router, sqlx::PgPool) {
     let state = Arc::new(AppState {
         pool: pool.clone(),
         auth_config: AuthConfig::from_secret("test-secret"),
+        query_api_url: "http://localhost:3001".to_string(),
     });
     let app = router(state);
     (app, pool)

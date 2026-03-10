@@ -46,7 +46,7 @@ Test coverage plan for model configuration and Ollama integration.
 ## Mock Strategy
 
 - **Unit tests:** No network. Use fixture TOML files and mock `ModelConfig` types.
-- **Integration tests:** Use `OLLAMA_URL` or `MESHMIND_OLLAMA_URL`; skip tests if `http://localhost:11434` unreachable (e.g. `#[ignore]` with env gate).
+- **Integration tests:** Use `OLLAMA_URL`; skip tests if `http://localhost:11434` unreachable (e.g. `#[ignore]` with env gate).
 - **CI:** Optional Ollama container in CI for integration tests; or mark as `#[ignore]` and run manually.
 
 ## Test Files

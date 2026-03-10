@@ -1,6 +1,7 @@
 //! Route definitions.
 
 use super::handlers::{self, AppState};
+use super::query_handlers;
 use super::workers;
 use axum::{
     middleware,
@@ -17,6 +18,14 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/heartbeat", post(workers::heartbeat))
         .route("/sources/:source_id/items", post(workers::create_items))
         .route("/jobs", post(workers::create_job))
+        .route(
+            "/source-items/:id/artifacts",
+            get(workers::get_source_item_artifacts),
+        )
+        .route(
+            "/source-items/:id/index-chunks",
+            post(workers::index_chunks),
+        )
         .route("/jobs/claim", post(workers::claim))
         .route("/jobs/{id}/progress", post(workers::progress))
         .route("/jobs/{id}/complete", post(workers::complete))
@@ -59,6 +68,10 @@ pub fn router(state: Arc<AppState>) -> Router {
         .route("/agents", get(handlers::agents_list))
         .route("/jobs", get(handlers::jobs_list))
         .route("/audit", get(handlers::audit_list))
+        .route("/search", get(query_handlers::search))
+        .route("/documents/:id", get(query_handlers::document_detail))
+        .route("/documents/:id/provenance", get(query_handlers::document_provenance))
+        .route("/ask", post(query_handlers::ask))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             crate::middleware::request_id_and_extensions,

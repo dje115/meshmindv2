@@ -17,6 +17,7 @@ pub struct Config {
     pub cors_enabled: bool,
     pub jwt_secret: String,
     pub seed_dev_admin: bool,
+    pub query_api_url: String,
 }
 
 impl Default for Config {
@@ -35,6 +36,8 @@ impl Default for Config {
             cors_enabled: true,
             jwt_secret: "change-me-in-production".to_string(),
             seed_dev_admin: false,
+            query_api_url: std::env::var("QUERY_API_URL")
+                .unwrap_or_else(|_| "http://localhost:3001".to_string()),
         }
     }
 }
@@ -80,6 +83,9 @@ impl Config {
         }
         if let Ok(v) = std::env::var("MESHMIND_SEED_DEV_ADMIN") {
             config.seed_dev_admin = v == "true" || v == "1";
+        }
+        if let Ok(v) = std::env::var("QUERY_API_URL") {
+            config.query_api_url = v;
         }
     }
 }

@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
-"""MeshMind v2 - OCR worker.
+"""MeshMind v2 - OCR worker entry point."""
 
-Placeholder. Claims OCR jobs from control-api.
-"""
-
-
-def main() -> None:
-    print("worker-ocr: placeholder")
-
+from meshmind_worker_ocr.cli import main
 
 if __name__ == "__main__":
     main()

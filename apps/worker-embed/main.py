@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
-"""MeshMind v2 - Embedding worker.
+"""MeshMind v2 - Embeddings worker entry point."""
 
-Placeholder. May be replaced with Rust implementation later.
-"""
-
-
-def main() -> None:
-    print("worker-embed: placeholder")
-
+from meshmind_worker_embed.cli import main
 
 if __name__ == "__main__":
     main()

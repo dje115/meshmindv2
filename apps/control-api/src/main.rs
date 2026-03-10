@@ -46,6 +46,7 @@ async fn main() -> Result<()> {
     let state = Arc::new(AppState {
         pool: pool.clone(),
         auth_config: auth_config.clone(),
+        query_api_url: config.query_api_url.clone(),
     });
 
     // Background task: mark agents stale/dead based on last_heartbeat.

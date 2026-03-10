@@ -87,6 +87,18 @@ pub async fn update(pool: &PgPool, id: Uuid, input: UpdateWorkspace) -> Result<W
     Ok(ws)
 }
 
+/// Workspace IDs the user has access to.
+pub async fn ids_for_user(pool: &PgPool, user_id: Uuid) -> Result<Vec<Uuid>, ApiError> {
+    let rows = sqlx::query_scalar::<_, Uuid>(
+        r#"SELECT workspace_id FROM workspace_users WHERE user_id = $1"#,
+    )
+    .bind(user_id)
+    .fetch_all(pool)
+    .await
+    .map_err(|e| ApiError::Internal(anyhow::anyhow!("workspace_ids: {}", e)))?;
+    Ok(rows)
+}
+
 pub async fn delete(pool: &PgPool, id: Uuid) -> Result<(), ApiError> {
     let r = sqlx::query(r#"DELETE FROM workspaces WHERE id = $1"#)
         .bind(id)

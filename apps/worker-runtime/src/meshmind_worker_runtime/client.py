@@ -192,6 +192,35 @@ class ControlPlaneClient:
         data = resp.json()
         return data.get("items", [])
 
+    async def get_source_item_artifacts(
+        self,
+        source_item_id: str,
+        job_kind: str,
+    ) -> dict[str, Any] | None:
+        """Fetch artifacts from latest completed job for source item and job kind."""
+        if not self._agent_id:
+            raise ValueError("agent_id required")
+        url = f"{self.base_url}/api/workers/source-items/{source_item_id}/artifacts"
+        resp = await self._client.get(url, params={"job_kind": job_kind})
+        if resp.status_code == 404:
+            return None
+        resp.raise_for_status()
+        return resp.json()
+
+    async def index_chunks(
+        self,
+        source_item_id: str,
+        chunks: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Index chunks for keyword search (chunk_index table)."""
+        if not self._agent_id:
+            raise ValueError("agent_id required")
+        url = f"{self.base_url}/api/workers/source-items/{source_item_id}/index-chunks"
+        payload = {"agent_id": self._agent_id, "chunks": chunks}
+        resp = await self._client.post(url, json=payload)
+        resp.raise_for_status()
+        return resp.json()
+
     async def create_job(
         self,
         source_id: str,
@@ -201,8 +230,8 @@ class ControlPlaneClient:
         """Create a downstream job (docproc or image)."""
         if not self._agent_id:
             raise ValueError("agent_id required")
-        if job_kind not in ("docproc", "image", "ocr"):
-            raise ValueError("job_kind must be docproc, image, or ocr")
+        if job_kind not in ("docproc", "image", "ocr", "enrich", "embed"):
+            raise ValueError("job_kind must be docproc, image, ocr, enrich, or embed")
         url = f"{self.base_url}/api/workers/jobs"
         payload = {
             "agent_id": self._agent_id,

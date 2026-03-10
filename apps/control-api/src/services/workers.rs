@@ -177,7 +177,7 @@ pub async fn claim(
         .map_err(|e| ApiError::Internal(anyhow::anyhow!("tx begin: {}", e)))?;
 
     // Find a queued job: prefer assigned source, else any matching capability.
-    // Source kind maps to capability: filesystem->filesystem, sqlite/csv/json->docproc.
+    // When job_kind is set (ocr, image, docproc), match by job_kind. Else map source kind to capability.
     let job = sqlx::query_as::<_, Job>(
         r#"SELECT j.id, j.source_id, j.source_item_id, j.agent_id, j.job_kind, j.status, j.claimed_at, j.completed_at, j.error,
                   COALESCE(j.retry_count, 0) as retry_count,
@@ -190,10 +190,10 @@ pub async fn claim(
            WHERE j.status = 'queued'
              AND (j.next_retry_at IS NULL OR j.next_retry_at <= now())
              AND (aa.id IS NOT NULL
-                  OR (CASE s.kind
+                  OR (COALESCE(j.job_kind::text, CASE s.kind
                         WHEN 'filesystem' THEN 'filesystem'
                         ELSE 'docproc'
-                      END = ANY($2::text[])))
+                      END) = ANY($2::text[])))
              AND EXISTS (
                SELECT 1 FROM agent_capabilities ac
                WHERE ac.agent_id = $1 AND ac.capability::text = ANY($2::text[])
@@ -444,6 +444,45 @@ pub async fn fail(
         .await
         .map_err(|e| ApiError::Internal(anyhow::anyhow!("fail commit: {}", e)))?;
     Ok(())
+}
+
+/// Fetch artifacts from the most recent completed job for a source item and job kind.
+/// Used by enrich/embed workers to get input from docproc/ocr/image/enrich jobs.
+pub async fn get_artifacts_for_source_item(
+    pool: &PgPool,
+    source_item_id: Uuid,
+    job_kind: WorkerCapability,
+) -> Result<Option<serde_json::Value>, ApiError> {
+    let job = sqlx::query_scalar::<_, Uuid>(
+        r#"SELECT j.id FROM jobs j
+           WHERE j.source_item_id = $1
+             AND j.job_kind = $2
+             AND j.status = 'completed'
+           ORDER BY j.completed_at DESC
+           LIMIT 1"#,
+    )
+    .bind(source_item_id)
+    .bind(job_kind)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| ApiError::Internal(anyhow::anyhow!("get artifacts job: {}", e)))?;
+
+    let Some(job_id) = job else {
+        return Ok(None);
+    };
+
+    let row: Option<(serde_json::Value,)> = sqlx::query_as(
+        r#"SELECT jl.details FROM job_logs jl
+           WHERE jl.job_id = $1 AND jl.message = 'completed'
+           ORDER BY jl.created_at DESC
+           LIMIT 1"#,
+    )
+    .bind(job_id)
+    .fetch_optional(pool)
+    .await
+    .map_err(|e| ApiError::Internal(anyhow::anyhow!("get artifacts: {}", e)))?;
+
+    Ok(row.map(|(d,)| d))
 }
 
 /// Assign a source to an agent (source-to-worker assignment).

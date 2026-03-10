@@ -98,7 +98,7 @@ pub struct Agent {
     pub updated_at: DateTime<Utc>,
 }
 
-/// Worker capability enum (filesystem, email, ocr, image, embed, docproc)
+/// Worker capability enum (filesystem, email, ocr, image, embed, docproc, enrich)
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, PartialEq, Eq, Hash, utoipa::ToSchema)]
 #[sqlx(type_name = "worker_capability", rename_all = "snake_case")]
 pub enum WorkerCapability {
@@ -108,6 +108,7 @@ pub enum WorkerCapability {
     Image,
     Embed,
     Docproc,
+    Enrich,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]

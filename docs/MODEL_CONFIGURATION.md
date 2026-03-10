@@ -51,7 +51,7 @@ export MESHMIND_MODEL_PROFILE=better-quality
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MESHMIND_OLLAMA_URL` | `http://localhost:11434` | Ollama API base URL |
+| `OLLAMA_URL` | `http://localhost:11434` | Ollama API base URL (control-api; shared standard) |
 | `MESHMIND_MODEL_PROFILE` | `cpu-friendly` | Profile name from meshmind-models.toml |
 | `MESHMIND_MODELS_CONFIG` | `config/meshmind-models.toml` | Path to model config file |
 

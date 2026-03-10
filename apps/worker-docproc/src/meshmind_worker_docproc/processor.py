@@ -89,7 +89,9 @@ async def process_docproc_job(client: ControlPlaneClient, job: ClaimedJob) -> No
             logger.info("created downstream OCR job", extra={"source_item_id": source_item_id})
         except Exception as e:
             logger.warning("could not create OCR job: %s", e)
-
-    # When extraction succeeds, downstream enrichment/chunking would be a separate job kind.
-    # Currently only docproc/image/ocr exist; no "enrich" job. Artifacts include
-    # downstream_enrich: true for consumers to trigger chunking.
+    elif source_item_id and doc.extraction_metadata.status == ExtractionStatus.SUCCESS:
+        try:
+            await client.create_job(job.source_id, source_item_id, "enrich")
+            logger.info("created downstream enrich job", extra={"source_item_id": source_item_id})
+        except Exception as e:
+            logger.warning("could not create enrich job: %s", e)

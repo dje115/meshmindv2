@@ -20,7 +20,7 @@
 |--------|-------|---------|
 | Source detail | `/sources/:id` | Edit source, view ingest history |
 | Job detail | `/jobs/:id` | Logs, artifacts produced |
-| Settings | `/settings` | User preferences, API keys |
+| Settings | `/settings` | Application settings (UI-first), user preferences, API keys — see [PRODUCT_DIRECTION.md](PRODUCT_DIRECTION.md) |
 
 ## Navigation
 

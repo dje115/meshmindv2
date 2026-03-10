@@ -1,6 +1,7 @@
 //! API routes and handlers.
 
 pub mod handlers;
+mod query_handlers;
 mod routes;
 pub mod workers;
 

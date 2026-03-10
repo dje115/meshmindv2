@@ -4,8 +4,8 @@ use axum::response::IntoResponse;
 
 use crate::entities::{SourceItem, WorkerCapability};
 use crate::error::ApiError;
-use crate::services::{jobs, source_items, workers};
-use axum::{extract::Path, extract::State, Json};
+use crate::services::{chunk_index, jobs, source_items, sources, workers};
+use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use utoipa::ToSchema;
@@ -97,6 +97,17 @@ pub struct CreateItemsRequest {
 #[derive(Debug, Serialize, ToSchema)]
 pub struct CreateItemsResponse {
     pub items: Vec<SourceItem>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct IndexChunksRequest {
+    pub agent_id: Uuid,
+    pub chunks: Vec<chunk_index::ChunkInput>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct GetArtifactsQuery {
+    pub job_kind: WorkerCapability,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -300,10 +311,14 @@ pub async fn create_job(
 ) -> Result<(axum::http::StatusCode, Json<crate::entities::Job>), ApiError> {
     if !matches!(
         req.job_kind,
-        WorkerCapability::Docproc | WorkerCapability::Image | WorkerCapability::Ocr
+        WorkerCapability::Docproc
+            | WorkerCapability::Image
+            | WorkerCapability::Ocr
+            | WorkerCapability::Enrich
+            | WorkerCapability::Embed
     ) {
         return Err(ApiError::BadRequest(
-            "job_kind must be docproc, image, or ocr".into(),
+            "job_kind must be docproc, image, ocr, enrich, or embed".into(),
         ));
     }
     let _agent = crate::services::agents::get(&state.pool, req.agent_id).await?;
@@ -316,4 +331,53 @@ pub async fn create_job(
     )
     .await?;
     Ok((axum::http::StatusCode::CREATED, Json(job)))
+}
+
+#[utoipa::path(
+    get,
+    path = "/workers/source-items/{id}/artifacts",
+    params(("id" = Uuid, Path, description = "Source item ID"), ("job_kind" = WorkerCapability, Query)),
+    responses((status = 200, description = "Artifacts from latest completed job"), (status = 404))
+)]
+pub async fn get_source_item_artifacts(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Query(query): Query<GetArtifactsQuery>,
+) -> Result<axum::response::Response, ApiError> {
+    let artifacts = workers::get_artifacts_for_source_item(
+        &state.pool,
+        id,
+        query.job_kind,
+    )
+    .await?;
+    match artifacts {
+        Some(a) => Ok(Json(a).into_response()),
+        None => Ok(axum::http::StatusCode::NOT_FOUND.into_response()),
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/workers/source-items/{id}/index-chunks",
+    params(("id" = Uuid, Path, description = "Source item ID")),
+    request_body = IndexChunksRequest,
+    responses((status = 200), (status = 400), (status = 404))
+)]
+pub async fn index_chunks(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<IndexChunksRequest>,
+) -> Result<axum::response::Response, ApiError> {
+    let _agent = crate::services::agents::get(&state.pool, req.agent_id).await?;
+    let si = source_items::get(&state.pool, id).await?;
+    let src = sources::get(&state.pool, si.source_id).await?;
+    let count = chunk_index::upsert_chunks(
+        &state.pool,
+        si.id,
+        si.source_id,
+        src.workspace_id,
+        req.chunks,
+    )
+    .await?;
+    Ok(Json(serde_json::json!({ "indexed": count })).into_response())
 }

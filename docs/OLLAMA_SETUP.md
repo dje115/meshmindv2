@@ -92,7 +92,7 @@ Usage:
 |----------|---------|-------------|
 | `OLLAMA_HOST` | (Ollama default) | Ollama listens on; e.g. `0.0.0.0` for network access |
 | `OLLAMA_ORIGINS` | `*` | CORS origins for Ollama API |
-| `MESHMIND_OLLAMA_URL` | `http://localhost:11434` | MeshMind Core uses this to call Ollama |
+| `OLLAMA_URL` | `http://localhost:11434` | MeshMind control-api uses this to call Ollama |
 | `MESHMIND_MODEL_PROFILE` | `cpu-friendly` | Profile name from model config |
 
 ## Local Development
@@ -102,7 +102,7 @@ Usage:
    ```powershell
    .\scripts\ollama-pull-models.ps1 -Profile cpu-friendly
    ```
-3. Set `MESHMIND_OLLAMA_URL` if Ollama is not on localhost.
+3. Set `OLLAMA_URL` if Ollama is not on localhost.
 4. Run MeshMind Core; startup validation will report model availability.
 
 ## Troubleshooting
