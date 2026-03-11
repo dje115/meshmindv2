@@ -51,6 +51,16 @@ make full-up
 # control-api: 3000, web: 8080
 ```
 
+## Filesystem connector (ingestion)
+
+```bash
+# Terminal 3: run the filesystem connector to process ingest jobs
+pip install -e apps/worker-runtime -e apps/worker-connectors
+CONTROL_API_URL=http://localhost:3000 MESHMIND_AGENT_NAME=meshmind-fs-connector MESHMIND_AGENT_CAPABILITIES=filesystem,docproc python apps/worker-connectors/main.py
+```
+
+Create a filesystem source in the web UI, trigger ingest, and the connector will scan and process files.
+
 ## Folder layout
 
 ```
@@ -74,7 +84,7 @@ infrastructure/
   .env.example
 
 docs/              # Foundation docs, ADRs
-scripts/           # Env checks, bootstrap
+scripts/           # Env checks, bootstrap, reset_stuck_jobs.py
 ```
 
 ## Project status (through Phase 4)

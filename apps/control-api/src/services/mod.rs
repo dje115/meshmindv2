@@ -1,5 +1,6 @@
 //! Business logic services.
 
+pub mod app_settings;
 pub mod agents;
 pub mod audit_events;
 pub mod chunk_index;

@@ -37,6 +37,7 @@ pub struct Workspace {
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type)]
+#[serde(rename_all = "snake_case")]
 #[sqlx(type_name = "source_kind", rename_all = "snake_case")]
 pub enum SourceKind {
     Filesystem,
@@ -100,6 +101,7 @@ pub struct Agent {
 
 /// Worker capability enum (filesystem, email, ocr, image, embed, docproc, enrich)
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, sqlx::Type, PartialEq, Eq, Hash, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
 #[sqlx(type_name = "worker_capability", rename_all = "snake_case")]
 pub enum WorkerCapability {
     Filesystem,

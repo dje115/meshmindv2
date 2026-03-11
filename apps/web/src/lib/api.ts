@@ -14,8 +14,12 @@ function headers(): HeadersInit {
 
 async function handleResp<T>(r: Response): Promise<T> {
   if (!r.ok) {
-    const err = await r.json().catch(() => ({ error: { message: r.statusText } }))
-    throw new Error(err?.error?.message ?? r.statusText)
+    const err = await r.json().catch(() => ({}))
+    const msg = err?.error?.message ?? err?.detail ?? (typeof err?.detail === 'string' ? err.detail : r.statusText)
+    const detail = Array.isArray(err?.detail)
+      ? err.detail.map((d: { loc?: unknown[]; msg?: string }) => `${d.loc?.join('.') ?? 'body'}: ${d.msg ?? ''}`).join('; ')
+      : null
+    throw new Error(detail || (typeof msg === 'string' ? msg : r.statusText))
   }
   if (r.status === 204) return undefined as T
   return r.json()
@@ -48,6 +52,53 @@ export async function sourcesList(workspaceId?: string) {
   const q = workspaceId ? `?workspace_id=${workspaceId}` : ''
   const r = await fetch(`${API}/sources${q}`, { headers: headers() })
   return handleResp<Source[]>(r)
+}
+
+export interface CreateSourceRequest {
+  workspace_id: string
+  name: string
+  kind: 'filesystem' | 'sqlite' | 'csv' | 'json'
+  config?: {
+    path?: string
+    root_path?: string
+    include_patterns?: string[]
+    exclude_patterns?: string[]
+    max_depth?: number
+    enabled?: boolean
+  }
+}
+
+export async function sourceCreate(req: CreateSourceRequest) {
+  const r = await fetch(`${API}/sources`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(req),
+  })
+  return handleResp<Source>(r)
+}
+
+export interface UpdateSourceRequest {
+  name?: string
+  kind?: 'filesystem' | 'sqlite' | 'csv' | 'json'
+  config?: Record<string, unknown>
+  status?: string
+}
+
+export async function sourceUpdate(id: string, req: UpdateSourceRequest) {
+  const r = await fetch(`${API}/sources/${id}`, {
+    method: 'PUT',
+    headers: headers(),
+    body: JSON.stringify(req),
+  })
+  return handleResp<Source>(r)
+}
+
+export async function sourceIngest(id: string) {
+  const r = await fetch(`${API}/sources/${id}/ingest`, {
+    method: 'POST',
+    headers: headers(),
+  })
+  return handleResp<Job>(r)
 }
 
 // Agents
@@ -88,12 +139,65 @@ export async function documentProvenance(id: string) {
 
 // Ask
 export async function ask(question: string, workspaceIds?: string[], sourceIds?: string[], maxChunks = 10) {
-  const r = await fetch(`${API}/ask`, {
-    method: 'POST',
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 120_000) // 2 min
+  try {
+    const r = await fetch(`${API}/ask`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({ question, workspace_ids: workspaceIds, source_ids: sourceIds, max_chunks: maxChunks }),
+      signal: controller.signal,
+    })
+    return handleResp<AskResponse>(r)
+  } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') {
+      throw new Error('Request timed out after 2 minutes. Ensure query-api (port 3001), Ollama, and Qdrant are running.')
+    }
+    throw e
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+// Components status
+export interface ComponentStatus {
+  status: string
+  message?: string
+}
+
+export interface ComponentsStatusResponse {
+  control_api: ComponentStatus
+  database: ComponentStatus
+  query_api: ComponentStatus
+  ollama: ComponentStatus
+  qdrant: ComponentStatus
+}
+
+export async function componentsStatus(): Promise<ComponentsStatusResponse> {
+  const r = await fetch(`${API}/components/status`, { headers: headers() })
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}))
+    const msg = err?.error?.message ?? err?.detail ?? r.statusText
+    throw new Error(typeof msg === 'string' ? msg : `HTTP ${r.status}`)
+  }
+  return r.json()
+}
+
+// Settings (admin)
+export type AppSettings = Record<string, Record<string, unknown>>
+
+export async function settingsGet(): Promise<AppSettings> {
+  const r = await fetch(`${API}/settings`, { headers: headers() })
+  return handleResp<AppSettings>(r)
+}
+
+export async function settingsUpdate(category: string, settings: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const r = await fetch(`${API}/settings`, {
+    method: 'PUT',
     headers: headers(),
-    body: JSON.stringify({ question, workspace_ids: workspaceIds, source_ids: sourceIds, max_chunks: maxChunks }),
+    body: JSON.stringify({ category, settings }),
   })
-  return handleResp<AskResponse>(r)
+  return handleResp<Record<string, unknown>>(r)
 }
 
 // Roles, Users (admin)
@@ -198,10 +302,20 @@ export interface Citation {
   open_target?: string
 }
 
+export interface WebCitation {
+  title: string
+  source: string
+  url: string
+  snippet: string
+}
+
 export interface AskResponse {
   answer: string
   citations: Citation[]
-  source_type: 'local' | 'external'
+  local_citations?: Citation[]
+  web_citations?: WebCitation[]
+  answer_source_type?: 'local' | 'web' | 'mixed'
+  source_type: 'local' | 'web' | 'mixed'
   confidence?: number
   coverage?: number
   related_documents: string[]

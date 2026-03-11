@@ -47,6 +47,8 @@ async fn main() -> Result<()> {
         pool: pool.clone(),
         auth_config: auth_config.clone(),
         query_api_url: config.query_api_url.clone(),
+        ollama_url: config.ollama_url.clone(),
+        qdrant_url: config.qdrant_url.clone(),
     });
 
     // Background task: mark agents stale/dead based on last_heartbeat.

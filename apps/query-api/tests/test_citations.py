@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from meshmind_query_api.services.ask_service import _extract_citations, _format_chunks_for_prompt
+from meshmind_query_api.services.ask_service import _extract_local_citations, _format_chunks_for_prompt
 
 
 def test_format_chunks() -> None:
@@ -23,7 +23,7 @@ def test_extract_citations() -> None:
         {"chunk_id": "c2", "source_item_id": "s2", "text": "B", "page_index": 1},
     ]
     answer = "The answer is based on [c1] and also [c2]."
-    citations = _extract_citations(answer, chunks)
+    citations = _extract_local_citations(answer, chunks)
     assert len(citations) == 2
     ids = {c.chunk_id for c in citations}
     assert ids == {"c1", "c2"}
@@ -32,5 +32,5 @@ def test_extract_citations() -> None:
 def test_extract_citations_no_match() -> None:
     chunks = [{"chunk_id": "c1", "source_item_id": "s1", "text": "A"}]
     answer = "No citations here."
-    citations = _extract_citations(answer, chunks)
+    citations = _extract_local_citations(answer, chunks)
     assert len(citations) == 0

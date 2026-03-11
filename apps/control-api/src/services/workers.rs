@@ -200,7 +200,7 @@ pub async fn claim(
              )
            ORDER BY aa.id IS NOT NULL DESC, j.created_at ASC
            LIMIT 1
-           FOR UPDATE SKIP LOCKED"#,
+           FOR UPDATE OF j SKIP LOCKED"#,
     )
     .bind(agent_id)
     .bind(&cap_strs)

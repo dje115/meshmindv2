@@ -2,6 +2,12 @@
 
 > **Note:** MeshMind v1 ([github.com/dje115/meshmind](https://github.com/dje115/meshmind), `C:\Users\david\Documents\meshmind`) is **reference-only**. v2 is a clean-sheet redesign.
 
+## Changelog
+
+| Document | Description |
+|----------|-------------|
+| [CHANGELOG.md](../CHANGELOG.md) | Release history, fixes, and new features |
+
 ## Foundation Documents
 
 | Document | Description |

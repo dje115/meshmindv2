@@ -18,6 +18,7 @@ pub struct Config {
     pub jwt_secret: String,
     pub seed_dev_admin: bool,
     pub query_api_url: String,
+    pub qdrant_url: String,
 }
 
 impl Default for Config {
@@ -38,6 +39,8 @@ impl Default for Config {
             seed_dev_admin: false,
             query_api_url: std::env::var("QUERY_API_URL")
                 .unwrap_or_else(|_| "http://localhost:3001".to_string()),
+            qdrant_url: std::env::var("QDRANT_URL")
+                .unwrap_or_else(|_| "http://localhost:6333".to_string()),
         }
     }
 }
@@ -86,6 +89,9 @@ impl Config {
         }
         if let Ok(v) = std::env::var("QUERY_API_URL") {
             config.query_api_url = v;
+        }
+        if let Ok(v) = std::env::var("QDRANT_URL") {
+            config.qdrant_url = v;
         }
     }
 }

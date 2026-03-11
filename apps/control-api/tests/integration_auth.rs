@@ -24,6 +24,9 @@ async fn login_returns_token() {
     let state = Arc::new(AppState {
         pool,
         auth_config: AuthConfig::from_secret("test-secret"),
+        query_api_url: "http://localhost:3001".to_string(),
+        ollama_url: "http://localhost:11434".to_string(),
+        qdrant_url: "http://localhost:6333".to_string(),
     });
     let app = router(state);
 

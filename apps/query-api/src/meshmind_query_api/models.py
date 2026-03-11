@@ -70,6 +70,7 @@ class ProvenanceDetail(BaseModel):
 # --- Ask ---
 
 class Citation(BaseModel):
+    """Local document citation."""
     chunk_id: str
     source_item_id: str
     text: str
@@ -81,17 +82,37 @@ class Citation(BaseModel):
     open_target: str | None = None
 
 
+class WebCitationModel(BaseModel):
+    """Web source citation."""
+    title: str
+    source: str
+    url: str
+    snippet: str
+
+
+class AskSettings(BaseModel):
+    """Optional overrides from app_settings (overrides env)."""
+    ollama_url: str | None = None
+    embed_model: str | None = None
+    ask_model: str | None = None
+    web_research_enabled: bool | None = None
+
+
 class AskRequest(BaseModel):
     question: str
     workspace_ids: list[str] = Field(default_factory=list)
     source_ids: list[str] | None = None
     max_chunks: int = 10
+    settings: AskSettings | None = None
 
 
 class AskResponse(BaseModel):
     answer: str
-    citations: list[Citation] = Field(default_factory=list)
-    source_type: str = "local"  # local | external (future)
+    citations: list[Citation] = Field(default_factory=list, description="Local citations (kept for backward compatibility)")
+    local_citations: list[Citation] = Field(default_factory=list)
+    web_citations: list[WebCitationModel] = Field(default_factory=list)
+    answer_source_type: str = "local"  # local | web | mixed
+    source_type: str = "local"  # Deprecated alias for answer_source_type
     confidence: float | None = None
     coverage: float | None = None
     related_documents: list[str] = Field(default_factory=list)

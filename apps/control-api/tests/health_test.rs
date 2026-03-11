@@ -26,6 +26,9 @@ async fn health_handler_returns_ok() {
     let state = Arc::new(AppState {
         pool,
         auth_config: AuthConfig::from_secret("test"),
+        query_api_url: "http://localhost:3001".to_string(),
+        ollama_url: "http://localhost:11434".to_string(),
+        qdrant_url: "http://localhost:6333".to_string(),
     });
     let app = axum::Router::new()
         .route("/health", axum::routing::get(health_handler))

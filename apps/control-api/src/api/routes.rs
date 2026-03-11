@@ -27,9 +27,9 @@ pub fn router(state: Arc<AppState>) -> Router {
             post(workers::index_chunks),
         )
         .route("/jobs/claim", post(workers::claim))
-        .route("/jobs/{id}/progress", post(workers::progress))
-        .route("/jobs/{id}/complete", post(workers::complete))
-        .route("/jobs/{id}/fail", post(workers::fail));
+        .route("/jobs/:id/progress", post(workers::progress))
+        .route("/jobs/:id/complete", post(workers::complete))
+        .route("/jobs/:id/fail", post(workers::fail));
 
     let api = Router::new()
         .nest("/workers", worker_routes)
@@ -65,9 +65,13 @@ pub fn router(state: Arc<AppState>) -> Router {
                 .put(handlers::sources_update)
                 .delete(handlers::sources_delete),
         )
+        .route("/sources/:id/ingest", post(handlers::sources_ingest))
         .route("/agents", get(handlers::agents_list))
         .route("/jobs", get(handlers::jobs_list))
+        .route("/jobs/reset-stuck", post(handlers::jobs_reset_stuck))
         .route("/audit", get(handlers::audit_list))
+        .route("/components/status", get(handlers::components_status))
+        .route("/settings", get(handlers::settings_get).put(handlers::settings_update))
         .route("/search", get(query_handlers::search))
         .route("/documents/:id", get(query_handlers::document_detail))
         .route("/documents/:id/provenance", get(query_handlers::document_provenance))

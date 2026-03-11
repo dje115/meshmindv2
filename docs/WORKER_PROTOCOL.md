@@ -11,9 +11,9 @@ Workers (agents) register with the control plane, fetch config, claim jobs, hear
 | POST | `/api/workers/register` | Register a new agent |
 | POST | `/api/workers/heartbeat` | Record heartbeat |
 | POST | `/api/workers/jobs/claim` | Claim a queued job |
-| POST | `/api/workers/jobs/{id}/progress` | Report progress |
-| POST | `/api/workers/jobs/{id}/complete` | Mark job completed |
-| POST | `/api/workers/jobs/{id}/fail` | Mark job failed (control plane handles retry) |
+| POST | `/api/workers/jobs/:id/progress` | Report progress |
+| POST | `/api/workers/jobs/:id/complete` | Mark job completed |
+| POST | `/api/workers/jobs/:id/fail` | Mark job failed (control plane handles retry) |
 
 ## Data Model
 
@@ -26,6 +26,8 @@ Workers (agents) register with the control plane, fetch config, claim jobs, hear
 ## API Examples
 
 ### Register
+
+Capabilities must use **snake_case** (e.g. `filesystem`, `docproc`, not `Filesystem`).
 
 ```bash
 curl -X POST http://localhost:3000/api/workers/register \
@@ -103,7 +105,7 @@ curl -X POST http://localhost:3000/api/workers/jobs/{job_id}/progress \
 ### Complete
 
 ```bash
-curl -X POST http://localhost:3000/api/workers/jobs/{job_id}/complete \
+curl -X POST http://localhost:3000/api/workers/jobs/:job_id/complete \
   -H "Content-Type: application/json" \
   -d '{
     "agent_id": "550e8400-e29b-41d4-a716-446655440000",
@@ -115,7 +117,7 @@ curl -X POST http://localhost:3000/api/workers/jobs/{job_id}/complete \
 ### Fail
 
 ```bash
-curl -X POST http://localhost:3000/api/workers/jobs/{job_id}/fail \
+curl -X POST http://localhost:3000/api/workers/jobs/:job_id/fail \
   -H "Content-Type: application/json" \
   -d '{
     "agent_id": "550e8400-e29b-41d4-a716-446655440000",
@@ -230,6 +232,25 @@ Only agents with `status = active` can claim jobs.
 4. **Process** — Worker does the work; optionally reports progress via `POST /workers/jobs/{id}/progress`.
 5. **Complete or Fail** — Worker calls `POST /workers/jobs/{id}/complete` or `POST /workers/jobs/{id}/fail`. On fail, control plane increments retry_count, sets next_retry_at (exponential backoff), and re-queues the job until max_retries.
 6. **Claim again** — Worker loops to step 3.
+
+## Resetting Stuck Jobs
+
+If a worker crashes after claiming a job but before completing or failing it, the job remains in `claimed` status and blocks re-processing. Use one of:
+
+**API (authenticated):**
+```bash
+curl -X POST http://localhost:3000/api/jobs/reset-stuck \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json"
+# Response: { "reset": 1 }
+```
+
+**Script:**
+```bash
+python scripts/reset_stuck_jobs.py
+```
+
+Requires `DATABASE_URL` (default: `postgres://meshmind:meshmind@localhost:5432/meshmind`).
 
 ## Adding a New Worker Type
 

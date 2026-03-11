@@ -1,1 +1,22 @@
 @import "tailwindcss";
+
+/* Product UX design tokens */
+:root {
+  --mm-surface: 15 23 42;
+  --mm-surface-elevated: 30 41 59;
+  --mm-surface-hover: 51 65 85;
+  --mm-border: 51 65 85;
+  --mm-border-subtle: 51 65 85 / 0.5;
+  --mm-text: 248 250 252;
+  --mm-text-muted: 148 163 184;
+  --mm-text-subtle: 100 116 139;
+  --mm-accent: 14 165 233;
+  --mm-accent-hover: 56 189 248;
+  --mm-success: 52 211 153;
+  --mm-warning: 251 191 36;
+  --mm-error: 248 113 113;
+  --mm-radius: 0.5rem;
+  --mm-radius-lg: 0.75rem;
+  --mm-spacing: 1rem;
+  --mm-spacing-lg: 1.5rem;
+}

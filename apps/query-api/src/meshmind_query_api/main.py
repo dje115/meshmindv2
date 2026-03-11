@@ -83,7 +83,7 @@ async def ask_endpoint(
     pool = await get_pool()
     async with pool.acquire() as conn:
         result = await ask(
-            conn, get_qdrant(), req.question, wids, req.source_ids, req.max_chunks
+            conn, get_qdrant(), req.question, wids, req.source_ids, req.max_chunks, req.settings
         )
     return result
 

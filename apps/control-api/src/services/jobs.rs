@@ -111,3 +111,16 @@ pub async fn create_for_item(
     .map_err(|e| ApiError::Internal(anyhow::anyhow!("job create_for_item: {}", e)))?;
     Ok(job)
 }
+
+/// Reset stuck claimed jobs (no completion) back to queued so workers can re-claim.
+pub async fn reset_stuck_claimed(pool: &PgPool) -> Result<u64, ApiError> {
+    let result = sqlx::query(
+        r#"UPDATE jobs
+           SET status = 'queued', agent_id = NULL, claimed_at = NULL, error = NULL, updated_at = now()
+           WHERE status = 'claimed' AND completed_at IS NULL"#,
+    )
+    .execute(pool)
+    .await
+    .map_err(|e| ApiError::Internal(anyhow::anyhow!("reset stuck jobs: {}", e)))?;
+    Ok(result.rows_affected())
+}

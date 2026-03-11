@@ -20,6 +20,8 @@ pub struct AppState {
     pub pool: sqlx::PgPool,
     pub auth_config: AuthConfig,
     pub query_api_url: String,
+    pub ollama_url: String,
+    pub qdrant_url: String,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -538,6 +540,31 @@ pub async fn sources_update(
     Ok(Json(source))
 }
 
+pub async fn sources_ingest(
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
+) -> Result<(StatusCode, Json<Job>), ApiError> {
+    let has = services::permissions::user_has_permission(&state.pool, auth.user_id, "sources:ingest").await?;
+    if !has {
+        return Err(ApiError::Forbidden("sources:ingest permission required".into()));
+    }
+    let source = services::sources::get(&state.pool, id).await?;
+    let job = services::jobs::create(&state.pool, id).await?;
+    audit::create(
+        &state.pool,
+        Some(source.workspace_id),
+        Some(auth.user_id),
+        "source.ingest",
+        "source",
+        Some(id),
+        None,
+        serde_json::json!({ "job_id": job.id }),
+    )
+    .await?;
+    Ok((StatusCode::CREATED, Json(job)))
+}
+
 pub async fn sources_delete(
     State(state): State<Arc<AppState>>,
     auth: AuthUser,
@@ -596,6 +623,14 @@ pub async fn jobs_list(
     Ok(Json(list))
 }
 
+pub async fn jobs_reset_stuck(
+    State(state): State<Arc<AppState>>,
+    _auth: AuthUser,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let count = services::jobs::reset_stuck_claimed(&state.pool).await?;
+    Ok(Json(serde_json::json!({ "reset": count })))
+}
+
 // --- Audit ---
 #[derive(Debug, Deserialize)]
 pub struct AuditListQuery {
@@ -616,4 +651,122 @@ pub async fn audit_list(
 ) -> Result<Json<Vec<AuditEvent>>, ApiError> {
     let list = services::audit_events::list(&state.pool, q.workspace_id, q.user_id, q.limit).await?;
     Ok(Json(list))
+}
+
+// --- Components status ---
+#[derive(Debug, Serialize)]
+pub struct ComponentStatus {
+    pub status: &'static str,
+    pub message: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ComponentsStatusResponse {
+    pub control_api: ComponentStatus,
+    pub database: ComponentStatus,
+    pub query_api: ComponentStatus,
+    pub ollama: ComponentStatus,
+    pub qdrant: ComponentStatus,
+}
+
+pub async fn components_status(State(state): State<Arc<AppState>>) -> Result<Json<ComponentsStatusResponse>, ApiError> {
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(3))
+        .build()
+        .map_err(|e| ApiError::Internal(anyhow::anyhow!("http client: {}", e)))?;
+
+    let (db_ok, db_err) = match sqlx::query("SELECT 1").execute(&state.pool).await {
+        Ok(_) => ("ok", None),
+        Err(e) => ("error", Some(e.to_string())),
+    };
+
+    let query_url = format!("{}/health", state.query_api_url.trim_end_matches('/'));
+    let query_fut = client.get(&query_url).send();
+    let ollama_url = format!("{}/api/version", state.ollama_url.trim_end_matches('/'));
+    let ollama_fut = client.get(&ollama_url).send();
+    let qdrant_url = format!("{}/", state.qdrant_url.trim_end_matches('/'));
+    let qdrant_fut = client.get(&qdrant_url).send();
+
+    let (query_res, ollama_res, qdrant_res) =
+        tokio::join!(query_fut, ollama_fut, qdrant_fut);
+
+    let (query_ok, query_err) = match query_res {
+        Ok(r) if r.status().is_success() => ("ok", None),
+        Ok(r) => ("error", Some(format!("HTTP {}", r.status()))),
+        Err(e) => ("error", Some(e.to_string())),
+    };
+    let (ollama_ok, ollama_err) = match ollama_res {
+        Ok(r) if r.status().is_success() => ("ok", None),
+        Ok(r) => ("error", Some(format!("HTTP {}", r.status()))),
+        Err(e) => ("error", Some(e.to_string())),
+    };
+    let (qdrant_ok, qdrant_err) = match qdrant_res {
+        Ok(r) if r.status().is_success() => ("ok", None),
+        Ok(r) => ("error", Some(format!("HTTP {}", r.status()))),
+        Err(e) => ("error", Some(e.to_string())),
+    };
+
+    Ok(Json(ComponentsStatusResponse {
+        control_api: ComponentStatus {
+            status: "ok",
+            message: None,
+        },
+        database: ComponentStatus {
+            status: db_ok,
+            message: db_err,
+        },
+        query_api: ComponentStatus {
+            status: query_ok,
+            message: query_err,
+        },
+        ollama: ComponentStatus {
+            status: ollama_ok,
+            message: ollama_err,
+        },
+        qdrant: ComponentStatus {
+            status: qdrant_ok,
+            message: qdrant_err,
+        },
+    }))
+}
+
+// --- Settings ---
+pub async fn settings_get(
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let has = services::permissions::user_has_permission(&state.pool, auth.user_id, "settings:read").await?;
+    if !has {
+        return Err(ApiError::Forbidden("settings:read permission required".into()));
+    }
+    let all = services::app_settings::get_all(&state.pool).await?;
+    let obj: serde_json::Map<String, serde_json::Value> = all
+        .into_iter()
+        .map(|(k, v)| {
+            let obj: serde_json::Map<String, serde_json::Value> = v.into_iter().collect();
+            (k, serde_json::Value::Object(obj))
+        })
+        .collect();
+    Ok(Json(serde_json::Value::Object(obj)))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SettingsUpdateRequest {
+    pub category: String,
+    pub settings: std::collections::HashMap<String, serde_json::Value>,
+}
+
+pub async fn settings_update(
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+    Json(req): Json<SettingsUpdateRequest>,
+) -> Result<Json<serde_json::Value>, ApiError> {
+    let has = services::permissions::user_has_permission(&state.pool, auth.user_id, "settings:write").await?;
+    if !has {
+        return Err(ApiError::Forbidden("settings:write permission required".into()));
+    }
+    services::app_settings::set_category(&state.pool, &req.category, &req.settings).await?;
+    let updated = services::app_settings::get_category(&state.pool, &req.category).await?;
+    let obj: serde_json::Map<String, serde_json::Value> = updated.into_iter().collect();
+    Ok(Json(serde_json::Value::Object(obj)))
 }

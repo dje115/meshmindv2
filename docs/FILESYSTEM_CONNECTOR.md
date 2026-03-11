@@ -58,8 +58,9 @@ When creating a filesystem source via `POST /api/sources`, use:
 
 3. Run:
    ```bash
-   python -m meshmind_connectors.cli
-   # or: meshmind-fs-connector
+   python apps/worker-connectors/main.py
+   # or: python -m meshmind_connectors.cli
+   # or: meshmind-fs-connector (if on PATH)
    ```
 
 ## Re-scan / Reindex
@@ -69,6 +70,7 @@ When creating a filesystem source via `POST /api/sources`, use:
 - **Modified**: Files with same path but changed mtime/size get a new fingerprint and are re-submitted.
 - **Deleted**: Fingerprints no longer present on disk are pruned from the store. The control plane does not automatically delete source items for deleted files; that is handled by a separate cleanup process if desired.
 - **Re-scan**: Trigger a new scan by creating a new job for the source (e.g. `POST /api/sources/:id/ingest`). The connector claims it and runs a full scan. Unchanged files are skipped; new/modified are processed.
+- **Stuck jobs**: If a connector crashes after claiming a job, the job stays `claimed`. Use `POST /api/jobs/reset-stuck` or `python scripts/reset_stuck_jobs.py` to reset it to `queued`.
 
 ## Provenance and Source Location
 

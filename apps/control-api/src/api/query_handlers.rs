@@ -2,7 +2,7 @@
 
 use crate::api::handlers::AppState;
 use crate::error::ApiError;
-use crate::services::{permissions, source_items, sources, workspaces, workers};
+use crate::services::{app_settings, permissions, source_items, sources, workspaces, workers};
 use axum::{
     extract::{Path, Query, State},
     Json,
@@ -209,17 +209,41 @@ pub async fn ask(
     let wids_str: Vec<String> = wids.iter().map(|u| u.to_string()).collect();
     let client = Client::new();
     let url = format!("{}/ask", state.query_api_url.trim_end_matches('/'));
+
+    // Load app settings and pass to query-api (overrides env/hardcoded)
+    let models = app_settings::get_category(&state.pool, "models").await.ok();
+    let internet = app_settings::get_category(&state.pool, "internet_research").await.ok();
+    let mut settings = serde_json::Map::new();
+    if let Some(m) = models {
+        if let Some(v) = m.get("ollama_url").and_then(|v| v.as_str()) {
+            settings.insert("ollama_url".into(), serde_json::Value::String(v.to_string()));
+        }
+        if let Some(v) = m.get("embed_model").and_then(|v| v.as_str()) {
+            settings.insert("embed_model".into(), serde_json::Value::String(v.to_string()));
+        }
+        if let Some(v) = m.get("ask_model").and_then(|v| v.as_str()) {
+            settings.insert("ask_model".into(), serde_json::Value::String(v.to_string()));
+        }
+    }
+    if let Some(i) = internet {
+        if let Some(v) = i.get("enabled").and_then(|v| v.as_bool()) {
+            settings.insert("web_research_enabled".into(), serde_json::Value::Bool(v));
+        }
+    }
+
     let body = serde_json::json!({
         "question": req.question,
         "workspace_ids": req.workspace_ids.unwrap_or(wids_str.clone()),
         "source_ids": req.source_ids,
         "max_chunks": req.max_chunks,
+        "settings": if settings.is_empty() { serde_json::Value::Null } else { serde_json::Value::Object(settings) },
     });
     let resp = client
         .post(&url)
         .header("Content-Type", "application/json")
         .header("X-Workspace-Ids", wids_str.join(","))
         .json(&body)
+        .timeout(std::time::Duration::from_secs(120))
         .send()
         .await
         .map_err(|e| ApiError::Internal(anyhow::anyhow!("query-api: {}", e)))?;

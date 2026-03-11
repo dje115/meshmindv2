@@ -67,7 +67,7 @@ class ControlPlaneClient:
         """Register with the control plane. Returns agent_id and token."""
         url = f"{self.base_url}/api/workers/register"
         payload = {"name": name, "capabilities": capabilities}
-        logger.info("registering", extra={"name": name, "capabilities": capabilities})
+        logger.info("registering", extra={"agent_name": name, "capabilities": capabilities})
         resp = await self._client.post(url, json=payload)
         resp.raise_for_status()
         data = resp.json()

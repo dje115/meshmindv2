@@ -17,6 +17,11 @@ Migrations live in `apps/control-api/migrations/` and are run automatically on s
 | 007_create_audit_events.sql | Audit events |
 | 008_seed_dev_admin.sql | Seed permissions, admin role, default workspace |
 | 009_worker_protocol.sql | agent_capabilities, agent_assignments, job_runs, job_logs, retry columns |
+| 010_source_items.sql | source_items table |
+| 011_add_job_kind.sql | job_kind column on jobs |
+| 012_add_enrich_capability.sql | enrich in worker_capability enum |
+| 013_chunk_index.sql | chunk_index table |
+| 014_app_settings.sql | app_settings table, settings:read/write |
 
 ## Running Migrations
 
