@@ -34,14 +34,29 @@ cp .env.example .env
 make control-api
 # or: cargo run -p meshmind-control-api
 
-# 4. Run web (terminal 2)
+# 4. Run query-api (terminal 2)
+make query-api
+# or: cd apps/query-api && python -m meshmind_query_api
+
+# 5. Run web (terminal 3)
 make web
 # or: cd apps/web && npm run dev
 ```
 
 - Control API: http://localhost:3000
+- Query API: http://localhost:3001
 - Web: http://localhost:5173
 - Health: http://localhost:3000/health
+
+### Environment variables (control-api)
+
+| Var | Default | Purpose |
+|-----|---------|---------|
+| `DATABASE_URL` | — | Postgres connection string (required) |
+| `JWT_SECRET` | — | JWT signing secret (required) |
+| `QUERY_API_URL` | — | Query API base URL (e.g. http://localhost:3001) |
+| `OLLAMA_URL` | http://localhost:11434 | Ollama API URL |
+| `MESHMIND_SEED_DEV_ADMIN` | false | Seed admin user (username/password: admin/admin) |
 
 ### Full stack via Docker
 
@@ -54,12 +69,14 @@ make full-up
 ## Filesystem connector (ingestion)
 
 ```bash
-# Terminal 3: run the filesystem connector to process ingest jobs
+# Terminal 4: run the filesystem connector to process ingest jobs
 pip install -e apps/worker-runtime -e apps/worker-connectors
 CONTROL_API_URL=http://localhost:3000 MESHMIND_AGENT_NAME=meshmind-fs-connector MESHMIND_AGENT_CAPABILITIES=filesystem,docproc python apps/worker-connectors/main.py
 ```
 
-Create a filesystem source in the web UI, trigger ingest, and the connector will scan and process files.
+Create a filesystem source in the web UI (Sources → Add source), trigger ingest, and the connector will scan and process files.
+
+**Troubleshooting:** If jobs get stuck in `claimed` (e.g. connector crashed), reset them with `python scripts/reset_stuck_jobs.py` or `POST /api/jobs/reset-stuck`.
 
 ## Folder layout
 
@@ -127,6 +144,7 @@ Optional integration tests: set `MESHTEST_PATH` to a folder with Office samples 
 ## Documentation
 
 - [Documentation index](docs/INDEX.md)
+- [Changelog](CHANGELOG.md)
 - [Local dev setup](docs/LOCAL_DEV_SETUP.md)
 - [Worker protocol](docs/WORKER_PROTOCOL.md)
 - [Filesystem connector](docs/FILESYSTEM_CONNECTOR.md)
